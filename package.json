@@ -1,0 +1,57 @@
+{
+  "name": "tv-view-app",
+  "version": "1.0.0",
+  "description": "Modern TV viewer for capture cards with remote control support",
+  "main": "./dist/main/index.js",
+  "scripts": {
+    "dev": "concurrently -k -n main,preload,renderer,electron -c blue,green,yellow,red \"npm run dev:main\" \"npm run dev:preload\" \"npm run dev:renderer\" \"npm run dev:electron\"",
+    "dev:main": "webpack --config webpack.main.config.js --mode development --watch",
+    "dev:preload": "webpack --config webpack.preload.config.js --mode development --watch",
+    "dev:renderer": "webpack serve --config webpack.renderer.config.js --mode development",
+    "dev:electron": "wait-on tcp:3000 file:dist/main/index.js file:dist/preload/index.js && cross-env ELECTRON_RENDERER_URL=http://localhost:3000 ELECTRON_ENABLE_LOGGING=1 electron .",
+    "build": "webpack --config webpack.main.config.js --mode production && webpack --config webpack.preload.config.js --mode production && webpack --config webpack.renderer.config.js --mode production",
+    "package": "npm run build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.tvview.app",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ]
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "electron-window-state": "^5.0.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.1.2",
+    "copy-webpack-plugin": "^14.0.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^7.1.4",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "html-webpack-plugin": "^5.6.6",
+    "mini-css-extract-plugin": "^2.10.1",
+    "postcss": "^8.5.8",
+    "postcss-loader": "^8.2.1",
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^4.2.2",
+    "ts-loader": "^9.5.4",
+    "typescript": "^6.0.2",
+    "wait-on": "^8.0.3",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.2.3"
+  }
+}

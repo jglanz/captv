@@ -1,0 +1,10 @@
+node_modules/
+node-compile-cache/
+out/
+dist/
+.DS_Store
+*.log
+/release
+.remember
+.claude
+.idea
