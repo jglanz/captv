@@ -52,7 +52,11 @@ function AppContent({
   const toggleMute = useCallback(() => updateSettings({ muted: !isMuted }), [isMuted, updateSettings])
   const toggleSettings = useCallback(() => setSettingsOpen(s => !s), [])
 
-  const handleVolumeChange = useCallback((v: number) => updateSettings({ volume: v }), [updateSettings])
+  const handleVolumeChange = useCallback((v: number) => {
+    // Dragging the slider should also unmute — otherwise the slider appears
+    // dead while muted (it shows 0 and changes have no audible effect).
+    updateSettings({ volume: v, muted: v === 0 })
+  }, [updateSettings])
   const handleAspectRatioChange = useCallback((r: string) => updateSettings({ aspectRatio: r }), [updateSettings])
 
   const handleVideoInputChange = useCallback((id: string) => {
