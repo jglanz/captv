@@ -5,8 +5,23 @@ import windowStateKeeper from 'electron-window-state'
 import { SettingsManager } from './SettingsManager'
 import { AppSettings } from '@shared/settings/types'
 
+const MACOS_PLATFORM = 'darwin'
+const WINDOWS_PLATFORM = 'win32'
+const ICON_ASSET_DIRECTORY_PARTS = ['assets', 'app', 'icons'] as const
+const PACKAGED_ICON_DIRECTORY = 'icons'
+const WINDOW_ICON_PATH_PARTS = process.platform === WINDOWS_PLATFORM
+  ? ['win', 'icon.ico'] as const
+  : ['linux', '512x512.png'] as const
+
 let mainWindow: BrowserWindow
 let settings: SettingsManager
+
+function getAppIconPath(): string {
+  const iconDirectory = app.isPackaged
+    ? join(process.resourcesPath, PACKAGED_ICON_DIRECTORY)
+    : join(app.getAppPath(), ...ICON_ASSET_DIRECTORY_PARTS)
+  return join(iconDirectory, ...WINDOW_ICON_PATH_PARTS)
+}
 
 function createWindow(): void {
   const mainWindowState = windowStateKeeper({
@@ -21,9 +36,10 @@ function createWindow(): void {
     height: mainWindowState.height,
     minWidth: 640,
     minHeight: 360,
+    icon: getAppIconPath(),
     backgroundColor: '#0a0a0a',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    frame: process.platform === 'darwin',
+    titleBarStyle: process.platform === MACOS_PLATFORM ? 'hiddenInset' : 'default',
+    frame: process.platform === MACOS_PLATFORM,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -53,6 +69,9 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.tvview.app')
+  if (is.dev && process.platform === MACOS_PLATFORM) {
+    app.dock?.setIcon(getAppIconPath())
+  }
   settings = new SettingsManager()
 
   app.on('browser-window-created', (_, window) => {
@@ -113,7 +132,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (process.platform !== MACOS_PLATFORM) {
     app.quit()
   }
 })

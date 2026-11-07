@@ -1,7 +1,7 @@
 {
-  "name": "tv-view-app",
+  "name": "captv",
   "version": "1.0.0",
-  "description": "Modern TV viewer for capture cards with remote control support",
+  "description": "Capture card TV viewer with remote control support",
   "main": "./dist/main/index.js",
   "scripts": {
     "dev": "concurrently -k -n main,preload,renderer,electron -c blue,green,yellow,red \"npm run dev:main\" \"npm run dev:preload\" \"npm run dev:renderer\" \"npm run dev:electron\"",
@@ -14,14 +14,35 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.tvview.app",
+    "appId": "com.github.jglanz.captv",
+    "productName": "CapTV",
+    "copyright": "Copyright © 2026 Jonathan Glanz",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "package.json"
-    ]
+    ],
+    "extraResources": [
+      {
+        "from": "assets/app/icons",
+        "to": "icons",
+        "filter": [
+          "linux/512x512.png",
+          "win/icon.ico"
+        ]
+      }
+    ],
+    "linux": {
+      "icon": "assets/app/icons/linux"
+    },
+    "win": {
+      "icon": "assets/app/icons/win/icon.ico"
+    },
+    "mac": {
+      "icon": "assets/app/icons/macos/icon.icns"
+    }
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
