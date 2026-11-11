@@ -1,3 +1,5 @@
+# Always install the latest releases.
+minimumReleaseAge: 0
 allowBuilds:
   # Downloads the Electron binary.
   electron: true
