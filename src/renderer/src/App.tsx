@@ -4,8 +4,11 @@ import { ControlBar } from './components/ControlBar'
 import { SettingsDrawer } from './components/SettingsDrawer'
 import { useMediaDevices } from './hooks/useMediaDevices'
 import { useFullscreen } from './hooks/useFullscreen'
+import { useAlwaysOnTop } from './hooks/useAlwaysOnTop'
 import { useSettings } from './hooks/useSettings'
 import type { AppSettings } from '@shared/settings/types'
+
+const ALWAYS_ON_TOP_WINDOW_CLASS = 'app-window--always-on-top'
 
 export default function App() {
   const { settings, loaded, updateSettings } = useSettings()
@@ -43,6 +46,7 @@ function AppContent({
     initialAudioOutput: settings.selectedAudioOutput,
   })
   const { isFullscreen, toggleFullscreen } = useFullscreen()
+  const isAlwaysOnTop = useAlwaysOnTop()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const isMuted = settings.muted
@@ -100,7 +104,7 @@ function AppContent({
   }, [toggleMute, toggleSettings, settingsOpen])
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-black">
+    <div className={`app-window relative w-full h-full overflow-hidden bg-black ${isAlwaysOnTop ? ALWAYS_ON_TOP_WINDOW_CLASS : ''}`}>
       {/* macOS title bar drag area */}
       {window.electronAPI?.platform === 'darwin' && (
         <div className="absolute top-0 left-0 right-0 h-8 titlebar-drag z-50" />
@@ -109,7 +113,7 @@ function AppContent({
       {/* Windows/Linux custom title bar */}
       {window.electronAPI && window.electronAPI.platform !== 'darwin' && (
         <div className="absolute top-0 left-0 right-0 h-8 flex items-center justify-between z-50 bg-black/60 titlebar-drag">
-          <span className="text-xs text-tv-muted pl-3 titlebar-drag">TV View</span>
+          <span className="text-xs text-tv-muted pl-3 titlebar-drag">{document.title}</span>
           <div className="flex titlebar-no-drag">
             <button
               onClick={() => window.electronAPI.minimizeWindow()}

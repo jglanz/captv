@@ -1,0 +1,35 @@
+# Test fixtures: deliberate violations and test data, in any fixtures/
+# directory below a tests/ directory; only the tests that own them read them
+**/tests/fixtures/**
+**/tests/**/fixtures/**
+# Executable test fixtures that are ordinary source and keep the house format:
+# the native command route and the fixture plugin packages under the root
+# tests/fixtures/, which are built, linted and tested like the plugins
+!libs/desktop-electron-main/tests/e2e/fixtures/native-command-route/
+!libs/desktop-electron-main/tests/e2e/fixtures/native-command-route/**
+!tests/fixtures/plugin-test-fixture-*/
+!tests/fixtures/plugin-test-fixture-*/**
+
+# Apache-2.0 attribution files stay byte-identical to the upstream copies
+LICENSE
+NOTICE
+THIRD_PARTY_NOTICES.md
+
+# Build and generated output (etc/schema is written by gen:schema). Build
+# output lives in the workspace root's build/ and at package roots only, as in
+# .gitignore; src/build/ is source.
+etc/schema/
+**/dist/**
+**/lib/**
+/build/
+/libs/*/build/
+/tools/*/build/
+/tests/fixtures/*/build/
+**/generated/**
+
+# Lockfile
+pnpm-lock.yaml
+
+# Managed OMX runtime lock metadata (never edit identity/state to pass gates)
+/.omx-state-locks/
+/.omx-state-locks.identity.json

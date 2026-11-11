@@ -3,10 +3,12 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import windowStateKeeper from 'electron-window-state'
 import { SettingsManager } from './SettingsManager'
+import { installAlwaysOnTop } from './AlwaysOnTop'
 import { AppSettings } from '@shared/settings/types'
+import { ALWAYS_ON_TOP_IPC, MACOS_PLATFORM, WINDOWS_PLATFORM } from '@shared/window'
+import packageMetadata from '../../package.json'
 
-const MACOS_PLATFORM = 'darwin'
-const WINDOWS_PLATFORM = 'win32'
+const APP_NAME = packageMetadata.build.productName
 const ICON_ASSET_DIRECTORY_PARTS = ['assets', 'app', 'icons'] as const
 const PACKAGED_ICON_DIRECTORY = 'icons'
 const WINDOW_ICON_PATH_PARTS = process.platform === WINDOWS_PLATFORM
@@ -36,6 +38,7 @@ function createWindow(): void {
     height: mainWindowState.height,
     minWidth: 640,
     minHeight: 360,
+    title: APP_NAME,
     icon: getAppIconPath(),
     backgroundColor: '#0a0a0a',
     titleBarStyle: process.platform === MACOS_PLATFORM ? 'hiddenInset' : 'default',
@@ -50,6 +53,7 @@ function createWindow(): void {
   })
 
   mainWindowState.manage(mainWindow)
+  installAlwaysOnTop(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -106,6 +110,8 @@ app.whenReady().then(() => {
   ipcMain.handle('set-fullscreen', (_event, fullscreen: boolean) => {
     mainWindow?.setFullScreen(fullscreen)
   })
+
+  ipcMain.handle(ALWAYS_ON_TOP_IPC.get, () => mainWindow?.isAlwaysOnTop() ?? false)
 
   // IPC: Window controls (for frameless window on Windows/Linux)
   ipcMain.handle('minimize-window', () => {

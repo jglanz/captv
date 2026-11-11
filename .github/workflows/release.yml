@@ -1,44 +1,145 @@
 name: Release
 
-# Every push to master runs the tests, bumps the patch version, tags it and
-# publishes a GitHub release. The version-bump push uses GITHUB_TOKEN, which
-# does not trigger workflows, so the bump commit does not start another run.
+# Bumps the version, commits and tags it on the dispatched branch, packages
+# that tag with electron-builder on Linux, Windows and macOS, then attaches the
+# packages to the tag's GitHub release.
+#
+# A failed package or publish job can be re-run on its own: it builds and
+# releases the tag the version job already pushed, and the publish job replaces
+# the assets of a release that already exists. `bump: none` releases the
+# version already in package.json at the dispatched commit, without bumping;
+# the release then creates the vX.Y.Z tag on that commit.
+#
+# pnpm is installed at the version pinned by the `packageManager` field of
+# package.json.
+
 on:
-  push:
-    branches: [master]
-
-permissions:
-  contents: write
-
-concurrency:
-  group: release
-  cancel-in-progress: false
+  workflow_dispatch:
+    inputs:
+      bump:
+        description:
+          Version bump ("none" releases the current package.json version)
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - none
+        default: patch
 
 jobs:
-  release:
+  version:
+    name: Bump version and tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      ref: ${{ steps.release-ref.outputs.ref }}
+      sha: ${{ steps.release-ref.outputs.sha }}
+      version: ${{ steps.release-ref.outputs.version }}
     env:
-      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      # The build and the unit tests that `pnpm version` runs (preversion) do
+      # not start Electron.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: lts/*
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm test
-
-      - name: Bump patch version and push tag
+          node-version: 26
+      - name: Install pnpm
+        run:
+          npm install -g "$(node -p "require('./package.json').packageManager")"
+      - run: pnpm install --frozen-lockfile
+      - name: Bump version, commit, tag and push
+        if: inputs.bump != 'none'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version patch -m "chore(release): v%s [skip ci]"
-          git push --follow-tags
+          pnpm version ${{ inputs.bump }} --message "v%s"
+          git push --follow-tags origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Resolve the ref to release
+        id: release-ref
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.bump }}" = "none" ]; then
+            echo "ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=v${version}" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Create GitHub release
+  package:
+    name: Package (${{ matrix.os }})
+    needs: version
+    strategy:
+      # Let the other platforms finish so only the failed one needs a re-run.
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Install pnpm
+        run:
+          npm install -g "$(node -p "require('./package.json').packageManager")"
+      - run: pnpm install --frozen-lockfile
+      # Builds dist/ and runs electron-builder for the runner's platform into
+      # release/. The publish job creates the GitHub release, so electron-builder
+      # publishes nothing itself.
+      - run: pnpm package --publish never
+        env:
+          # No signing identity is configured; macOS packages are unsigned.
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: packages-${{ runner.os }}
+          path: |
+            release/*.AppImage
+            release/*.snap
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            !release/*__uninstaller*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs:
+      - version
+      - package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: packages-*
+          path: packages
+          merge-multiple: true
+      - name: Create the release and attach the packages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v$(node -p "require('./package.json').version")" --generate-notes
+          GH_REPO: ${{ github.repository }}
+          TAG: v${{ needs.version.outputs.version }}
+          SHA: ${{ needs.version.outputs.sha }}
+        run: |
+          ls -l packages
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" packages/* --clobber
+          else
+            gh release create "$TAG" packages/* --target "$SHA" --generate-notes
+          fi

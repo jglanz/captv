@@ -1,15 +1,18 @@
-const path = require('path');
+const Path = require('path');
 
 module.exports = (_env, argv) => ({
   target: 'electron-preload',
   entry: './src/preload/index.ts',
   output: {
-    path: path.resolve(__dirname, 'dist/preload'),
+    path: Path.resolve(__dirname, 'dist/preload'),
     filename: 'index.js',
     clean: true,
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      '@shared': [Path.resolve(__dirname, 'src/shared')],
+    },
   },
   module: {
     rules: [

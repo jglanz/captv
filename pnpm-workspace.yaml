@@ -1,0 +1,8 @@
+allowBuilds:
+  # Downloads the Electron binary.
+  electron: true
+  # Selects the host-arch 7-Zip binary used by Squirrel.Windows builds.
+  electron-winstaller: true
+  # Builds from source only when the prebuilt binary from its optional
+  # dependencies is missing.
+  "@parcel/watcher": false

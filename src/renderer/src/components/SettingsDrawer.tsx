@@ -1,6 +1,7 @@
 import React from 'react'
 import { DeviceSelector } from './DeviceSelector'
 import { MediaDeviceEntry } from '../hooks/useMediaDevices'
+import { ALWAYS_ON_TOP_SHORTCUT, MACOS_PLATFORM } from '@shared/window'
 
 interface SettingsDrawerProps {
   isOpen: boolean
@@ -165,6 +166,9 @@ export function SettingsDrawer({
               {[
                 ['F11', 'Toggle fullscreen'],
                 ['Ctrl+F', 'Toggle fullscreen'],
+                [window.electronAPI?.platform === MACOS_PLATFORM
+                  ? ALWAYS_ON_TOP_SHORTCUT.macLabel
+                  : ALWAYS_ON_TOP_SHORTCUT.defaultLabel, 'Toggle always on top'],
                 ['M', 'Toggle mute'],
                 ['S', 'Toggle settings'],
                 ['Esc', 'Close settings'],
