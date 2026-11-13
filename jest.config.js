@@ -5,7 +5,16 @@ module.exports = {
   moduleNameMapper: {
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
   },
+  // swc transpiles only; `pnpm typecheck` type checks the tests through
+  // tsconfig.test.json. @swc/jest hoists `jest.mock` calls above the imports.
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
+    '^.+\\.ts$': [
+      '@swc/jest',
+      {
+        swcrc: false,
+        jsc: { target: 'esnext', parser: { syntax: 'typescript' } },
+        module: { type: 'commonjs' },
+      },
+    ],
   },
 }

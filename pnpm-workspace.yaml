@@ -1,6 +1,9 @@
 # Always install the latest releases.
 minimumReleaseAge: 0
 allowBuilds:
+  # Checks the native binding from its optional dependencies and falls back to
+  # the WebAssembly build when it is missing.
+  "@swc/core": true
   # Downloads the Electron binary.
   electron: true
   # Selects the host-arch 7-Zip binary used by Squirrel.Windows builds.

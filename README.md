@@ -18,13 +18,16 @@ Electron app for watching a capture card as a TV, with remote control support fo
 | Command | What it does |
 |---|---|
 | `pnpm install` | Installs dependencies from `pnpm-lock.yaml` |
-| `pnpm dev` | Webpack watch for main/preload, dev server for the renderer, then launches Electron |
-| `pnpm build` | Production webpack builds of main, preload and renderer into `dist/` |
+| `pnpm dev` | Webpack watch for main/preload, dev server for the renderer, `tsc` type checking in watch mode, then launches Electron |
+| `pnpm typecheck` | Type checks the main/preload/shared and renderer projects (`tsc -b`) and the tests (`tsconfig.test.json`) |
+| `pnpm build` | `pnpm typecheck`, then production webpack builds of main, preload and renderer into `dist/` |
 | `pnpm package` | Build, then package with electron-builder into `release/` |
-| `pnpm test` | Run the Jest unit tests (ts-jest, config in `jest.config.js` / `tsconfig.test.json`) |
+| `pnpm test` | Run the Jest unit tests (transpiled by `@swc/jest`, config in `jest.config.js`) |
 | `pnpm release` | Starts the GitHub Actions release workflow (patch bump) |
 
-`pnpm-workspace.yaml` allows the install scripts of `electron` (downloads the Electron binary) and `electron-winstaller`, and denies the `@parcel/watcher` one; its native binary comes from its optional dependencies.
+TypeScript 7 is the native compiler and has no JavaScript compiler API, so it only type checks. Webpack transpiles every target with `swc-loader`, using the rules shared in `webpack.swc.js`, and Jest uses `@swc/jest`.
+
+`pnpm-workspace.yaml` allows the install scripts of `@swc/core` (checks its native binding), `electron` (downloads the Electron binary) and `electron-winstaller`, and denies the `@parcel/watcher` one; its native binary comes from its optional dependencies.
 
 ## Releasing
 

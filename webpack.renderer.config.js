@@ -1,6 +1,7 @@
 const Path = require("path")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+const { createSwcRules } = require("./webpack.swc")
 const {
   build: { productName: APP_NAME }
 } = require("./package.json")
@@ -24,16 +25,7 @@ module.exports = (_env, argv) => {
     },
     module: {
       rules: [
-        {
-          test: /\.tsx?$/,
-          use: {
-            loader: "ts-loader",
-            options: {
-              configFile: "tsconfig.web.json"
-            }
-          },
-          exclude: /node_modules/
-        },
+        ...createSwcRules({ development: isDev }),
         {
           test: /\.css$/,
           use: [

@@ -1,4 +1,5 @@
 const Path = require('path');
+const { createSwcRules } = require('./webpack.swc');
 
 module.exports = (_env, argv) => ({
   target: 'electron-preload',
@@ -15,18 +16,7 @@ module.exports = (_env, argv) => ({
     },
   },
   module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        use: {
-          loader: 'ts-loader',
-          options: {
-            configFile: 'tsconfig.node.json',
-          },
-        },
-        exclude: /node_modules/,
-      },
-    ],
+    rules: createSwcRules({ development: argv.mode === 'development' }),
   },
   node: {
     __dirname: false,
